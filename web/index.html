@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student AI Assistant — Capstone Studio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand" id="brandTrigger" title="Student AI Assistant">
+        <span class="brand-logo" aria-hidden="true">AI</span>
+        <div class="brand-text">
+          <h1>Student Assistant</h1>
+          <span class="brand-sub">Local AI &bull; Camera &bull; PDF Studio</span>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Main sections">
+        <button class="nav-btn active" data-view="workspace">
+          <span class="nav-icon">&#128172;</span> Workspace
+        </button>
+        <button class="nav-btn" data-view="model">
+          <span class="nav-icon">&#9881;</span> AI &amp; Rules
+        </button>
+        <button class="nav-btn" data-view="pdfs">
+          <span class="nav-icon">&#128196;</span> PDF Library
+          <span class="badge" id="activePdfBadge">0</span>
+        </button>
+        <button class="nav-btn admin-nav-btn hidden" id="adminNavBtn" data-view="admin">
+          <span class="nav-icon">&#128295;</span> Admin Lab
+        </button>
+      </nav>
+    </div>
+
+    <div class="topbar-right">
+      <div class="profile-switcher" title="Switch personalized profile">
+        <label for="profileSelect" class="sr-only">Profile</label>
+        <select id="profileSelect"></select>
+      </div>
+
+      <div class="status-pills">
+        <span class="status-pill" id="aiStatusPill" title="Local AI model status">
+          <span class="dot offline"></span> AI: Offline
+        </span>
+        <span class="status-pill" id="camStatusPill" title="Active camera status">
+          <span class="dot idle"></span> Cam: Idle
+        </span>
+      </div>
+
+      <button class="icon-btn" id="themeToggleBtn" title="Switch light / dark theme" aria-label="Toggle theme">
+        &#9790;
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="app-main">
+    <!-- ===================== VIEW 1: WORKSPACE (CHAT + LIVE CAMERA) ===================== -->
+    <section class="view active" id="view-workspace">
+      <div class="workspace-grid">
+        <!-- Left/Center: Chat & Voice Box -->
+        <div class="panel chat-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Assistant Chat</h2>
+              <p class="panel-meta" id="chatContextSummary">Model: not set &bull; 0 active PDFs &bull; 0 rules</p>
+            </div>
+            <div class="panel-actions">
+              <label class="toggle-chip" title="Read AI answers aloud using speaker">
+                <input type="checkbox" id="ttsToggle" />
+                <span>&#128266; Read Aloud</span>
+              </label>
+              <button class="btn btn-ghost btn-sm" id="clearChatBtn">Clear Chat</button>
+            </div>
+          </div>
+
+          <div class="chat-messages" id="chatMessages" aria-live="polite">
+            <div class="empty-state" id="chatEmptyState">
+              <div class="empty-icon">&#127891;</div>
+              <h3>Ready to help you study</h3>
+              <p>Type a question below, use your microphone, or attach a live snapshot from your prototype or laptop camera.</p>
+              <div class="quick-prompts">
+                <button class="chip-btn" data-prompt="Summarize the key points from my active PDFs.">Summarize my PDFs</button>
+                <button class="chip-btn" data-prompt="Explain what you see in the camera step by step.">Explain camera view</button>
+                <button class="chip-btn" data-prompt="Quiz me with 3 practice questions based on my notes.">Quiz me</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attached Snapshot Preview Strip -->
+          <div class="attachment-strip hidden" id="snapshotStrip">
+            <img id="snapshotStripImg" alt="Captured camera frame" />
+            <div class="attachment-info">
+              <strong id="snapshotStripLabel">Camera snapshot attached</strong>
+              <span>Will be sent with your next message</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="removeSnapshotBtn">Remove</button>
+          </div>
+
+          <!-- Chat Input Bar -->
+          <div class="chat-composer">
+            <div class="composer-toolbar">
+              <div class="mic-source-group">
+                <span class="toolbar-label">Mic Source:</span>
+                <div class="segmented segmented-sm" id="micSourceSwitch">
+                  <button class="seg-btn active" data-mic="laptop" type="button">Laptop Mic</button>
+                  <button class="seg-btn" data-mic="prototype" type="button">Prototype Mic</button>
+                </div>
+              </div>
+
+              <label class="toggle-chip" title="Automatically grab a live camera frame when you send a message">
+                <input type="checkbox" id="autoAttachCamToggle" />
+                <span>&#128247; Auto-attach camera</span>
+              </label>
+            </div>
+
+            <form class="composer-form" id="chatForm">
+              <button type="button" class="icon-btn mic-btn" id="micRecordBtn" title="Speak your request (uses selected mic)">
+                &#127908;
+              </button>
+              <textarea
+                id="chatInput"
+                rows="1"
+                placeholder="Write your request here instead of using the microphone... (Enter to send, Shift+Enter for new line)"
+              ></textarea>
+              <button type="button" class="btn btn-ghost btn-sm hidden" id="stopGenBtn">Stop</button>
+              <button type="submit" class="btn btn-primary" id="sendMsgBtn">Send</button>
+            </form>
+            <div class="composer-hint" id="micStatusText">Text mode ready. Click the mic icon anytime to speak.</div>
+          </div>
+        </div>
+
+        <!-- Right: Live Camera Stage -->
+        <aside class="panel camera-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Live Camera</h2>
+              <p class="panel-meta" id="cameraSourceLabel">Prototype (AiPi-CAM-D200)</p>
+            </div>
+            <div class="segmented segmented-sm" id="cameraSourceSwitch">
+              <button class="seg-btn active" data-cam="prototype" type="button">Prototype</button>
+              <button class="seg-btn" data-cam="laptop" type="button">Laptop</button>
+            </div>
+          </div>
+
+          <!-- Prototype Camera Controls -->
+          <div class="cam-config-bar" id="protoCamConfig">
+            <label for="boardIpInput">Board IP</label>
+            <div class="inline-row">
+              <input type="text" id="boardIpInput" placeholder="e.g. 192.168.1.50" />
+              <button type="button" class="btn btn-secondary btn-sm" id="connectProtoCamBtn">Connect</button>
+            </div>
+          </div>
+
+          <!-- Laptop Camera Controls -->
+          <div class="cam-config-bar hidden" id="laptopCamConfig">
+            <label for="laptopCamSelect">Webcam</label>
+            <div class="inline-row">
+              <select id="laptopCamSelect">
+                <option value="">Default Laptop Camera</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-sm" id="startLaptopCamBtn">Start</button>
+            </div>
+          </div>
+
+          <!-- Video Viewport -->
+          <div class="camera-viewport" id="cameraViewport">
+            <img id="protoStreamImg" class="cam-media hidden" alt="Prototype camera stream" crossorigin="anonymous" />
+            <video id="laptopVideoEl" class="cam-media hidden" autoplay playsinline muted></video>
+            <canvas id="captureCanvas" class="hidden"></canvas>
+            <div class="cam-placeholder" id="camPlaceholder">
+              <div class="cam-placeholder-icon">&#128249;</div>
+              <p id="camPlaceholderText">Enter your board IP and click Connect, or switch to Laptop Camera.</p>
+            </div>
+            <span class="cam-badge hidden" id="camLiveBadge">LIVE</span>
+          </div>
+
+          <!-- Camera Action Buttons -->
+          <div class="camera-controls">
+            <button type="button" class="btn btn-primary" id="captureToChatBtn">&#128248; Capture &amp; Attach</button>
+            <button type="button" class="btn btn-secondary" id="freezeCamBtn">Freeze</button>
+            <button type="button" class="btn btn-ghost" id="stopCamBtn">Stop</button>
+          </div>
+
+          <!-- Quick Active Setup Card -->
+          <div class="mini-card">
+            <div class="mini-card-header">
+              <strong>Active Personalization</strong>
+              <button type="button" class="link-btn" data-jump="model">Edit</button>
+            </div>
+            <div class="mini-kv">
+              <span>Model</span>
+              <code id="miniModelName">Not selected</code>
+            </div>
+            <div class="mini-kv">
+              <span>Active Rules</span>
+              <span id="miniRulesCount">0 enabled</span>
+            </div>
+            <div class="mini-kv">
+              <span>Active PDFs</span>
+              <span id="miniPdfsCount">0 enabled</span>
+            </div>
+            <div class="mini-kv">
+              <span>Mic Input</span>
+              <span id="miniMicSource">Laptop Mic</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===================== VIEW 2: AI MODEL & RULES STUDIO ===================== -->
+    <section class="view" id="view-model">
+      <div class="section-grid">
+        <!-- Local AI Server & Model Card -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Local AI Model Connection</h2>
+              <p class="panel-meta">Connect to Ollama or any local OpenAI-compatible server on your PC.</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="testAiConnBtn">Test Connection</button>
+          </div>
+
+          <div class="form-stack">
+            <div class="form-row-2">
+              <div class="field">
+                <label for="aiBackendType">Local Server Type</label>
+                <select id="aiBackendType">
+                  <option value="ollama">Ollama (Default: localhost:11434)</option>
+                  <option value="openai">OpenAI-Compatible (LM Studio / llama.cpp)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="aiServerUrl">Server URL</label>
+                <input type="text" id="aiServerUrl" placeholder="http://localhost:11434" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="aiModelSelect">Installed Local Model</label>
+              <div class="inline-row">
+                <select id="aiModelSelect">
+                  <option value="">Click Refresh to load models...</option>
+                </select>
+                <button type="button" class="btn btn-secondary" id="refreshModelsBtn">Refresh Models</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="aiModelManual">Or Type Model Name Manually</label>
+              <input type="text" id="aiModelManual" placeholder="e.g. llama3.2-vision, llava, gemma3:4b, qwen2.5:7b" />
+              <small class="field-hint">Tip: Use a vision model (like <code>llava</code>, <code>llama3.2-vision</code>, or <code>gemma3</code>) if you want the AI to analyze camera images.</small>
+            </div>
+
+            <div class="form-row-3">
+              <div class="field">
+                <label for="aiTempRange">Creativity: <strong id="aiTempVal">0.4</strong></label>
+                <input type="range" id="aiTempRange" min="0" max="1.5" step="0.1" value="0.4" />
+              </div>
+              <div class="field">
+                <label for="aiLengthSelect">Answer Style</label>
+                <select id="aiLengthSelect">
+                  <option value="short">Short &amp; Direct</option>
+                  <option value="balanced" selected>Balanced</option>
+                  <option value="detailed">Detailed &amp; Thorough</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="aiLangSelect">Preferred Language</label>
+                <select id="aiLangSelect">
+                  <option value="auto">Match my message</option>
+                  <option value="English">English</option>
+                  <option value="Arabic">Arabic</option>
+                  <option value="French">French</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="protoMicUrlInput">Prototype Mic Endpoint (Optional)</label>
+              <input type="text" id="protoMicUrlInput" placeholder="e.g. http://192.168.1.50/audio or ws://192.168.1.50:81/mic" />
+              <small class="field-hint">Used when Mic Source is switched to Prototype Mic.</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Persona & Profiles Card -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Personalization &amp; Profiles</h2>
+              <p class="panel-meta">Create separate setups for different subjects or study styles.</p>
+            </div>
+            <div class="inline-row">
+              <button type="button" class="btn btn-secondary btn-sm" id="newProfileBtn">+ New Profile</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="deleteProfileBtn">Delete</button>
+            </div>
+          </div>
+
+          <div class="form-stack">
+            <div class="field">
+              <label for="profileNameInput">Profile Name</label>
+              <input type="text" id="profileNameInput" placeholder="e.g. Grade 12 Physics Tutor" />
+            </div>
+
+            <div class="field">
+              <label for="systemPromptInput">AI Persona / Role Instructions</label>
+              <textarea id="systemPromptInput" rows="4" placeholder="Describe how the assistant should behave..."></textarea>
+            </div>
+
+            <div class="field">
+              <label>Quick Behavior Switches</label>
+              <div class="quick-rules-grid" id="quickRuleToggles">
+                <label class="switch-card">
+                  <input type="checkbox" data-quick-rule="Give step-by-step hints first instead of giving the final answer right away." />
+                  <div>
+                    <strong>Tutor Mode (Hints First)</strong>
+                    <span>Guides you step by step</span>
+                  </div>
+                </label>
+                <label class="switch-card">
+                  <input type="checkbox" data-quick-rule="Use only the uploaded PDF notes when answering. If the answer is not in the PDFs, say so clearly." />
+                  <div>
+                    <strong>Strict to My PDFs</strong>
+                    <span>Avoid outside guessing</span>
+                  </div>
+                </label>
+                <label class="switch-card">
+                  <input type="checkbox" data-quick-rule="Explain concepts in simple, plain words suitable for a Grade 12 student." />
+                  <div>
+                    <strong>Simple Explanations</strong>
+                    <span>Clear, plain language</span>
+                  </div>
+                </label>
+                <label class="switch-card">
+                  <input type="checkbox" data-quick-rule="End each explanation with one short check-understanding question." />
+                  <div>
+                    <strong>Quiz Check-In</strong>
+                    <span>Tests your understanding</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="inline-row end-row">
+              <button type="button" class="btn btn-ghost btn-sm" id="exportConfigBtn">Export Setup (.json)</button>
+              <label class="btn btn-ghost btn-sm file-btn">
+                Import Setup
+                <input type="file" id="importConfigInput" accept=".json" hidden />
+              </label>
+              <button type="button" class="btn btn-primary" id="savePersonalizationBtn">Save Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Rules Builder (Full Width) -->
+        <div class="panel span-2">
+          <div class="panel-header">
+            <div>
+              <h2>Specific Rules</h2>
+              <p class="panel-meta">Add custom rules the AI must obey in this profile. Turn any rule ON or OFF anytime.</p>
+            </div>
+          </div>
+
+          <form class="inline-row rule-add-form" id="addRuleForm">
+            <input type="text" id="newRuleInput" placeholder="Write a specific rule (e.g. Always show units in physics equations)" />
+            <button type="submit" class="btn btn-primary">Add Rule</button>
+          </form>
+
+          <ul class="rules-list" id="rulesList"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== VIEW 3: PDF KNOWLEDGE BASE ===================== -->
+    <section class="view" id="view-pdfs">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>PDF Knowledge Base</h2>
+            <p class="panel-meta">Upload textbooks, slides, or notes. Toggle which PDFs the AI should use right now.</p>
+          </div>
+          <div class="inline-row">
+            <button type="button" class="btn btn-ghost btn-sm" id="enableAllPdfsBtn">Enable All</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="disableAllPdfsBtn">Disable All</button>
+          </div>
+        </div>
+
+        <div class="dropzone" id="pdfDropzone">
+          <input type="file" id="pdfFileInput" accept=".pdf,.txt,.md" multiple hidden />
+          <div class="dropzone-icon">&#128218;</div>
+          <h3>Drop PDF files here or click to browse</h3>
+          <p>Supports PDF documents (and .txt / .md notes). Stored locally in your browser.</p>
+          <button type="button" class="btn btn-primary" id="browsePdfBtn">Choose Files</button>
+          <p class="upload-progress hidden" id="pdfUploadStatus"></p>
+        </div>
+
+        <div class="pdf-list" id="pdfList"></div>
+      </div>
+
+      <!-- PDF Text Preview Modal -->
+      <div class="modal hidden" id="pdfPreviewModal" role="dialog" aria-modal="true">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 id="pdfPreviewTitle">PDF Preview</h3>
+            <button type="button" class="icon-btn" id="closePdfModalBtn">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p class="panel-meta" id="pdfPreviewMeta"></p>
+            <pre class="code-preview" id="pdfPreviewText"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== VIEW 4: HIDDEN ADMIN COMPONENT TEST LAB ===================== -->
+    <section class="view" id="view-admin">
+      <div class="admin-banner">
+        <div>
+          <h2>&#128295; Hidden Admin — Component Test Lab</h2>
+          <p>Test every hardware &amp; software component separately. Shortcut: <code>Ctrl + Shift + A</code> (or click the logo 5 times).</p>
+        </div>
+        <div class="inline-row">
+          <button type="button" class="btn btn-primary btn-sm" id="adminRunAllBtn">Run All Quick Checks</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="adminExportLogBtn">Export Report</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="adminHideBtn">Hide Admin</button>
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <!-- 1. Prototype Camera Test -->
+        <div class="panel test-card">
+          <div class="test-header">
+            <h3>1. Prototype Camera (AiPi-CAM-D200)</h3>
+            <span class="test-badge idle" id="badge-proto-cam">Not Tested</span>
+          </div>
+          <div class="field">
+            <label for="adminBoardIp">Target Board IP</label>
+            <input type="text" id="adminBoardIp" placeholder="192.168.1.50" />
+          </div>
+          <div class="test-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="testProtoStatusBtn">Ping /status</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testProtoCaptureBtn">Test /capture</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testProtoStreamBtn">Toggle /stream</button>
+          </div>
+          <div class="test-preview-box">
+            <img id="adminProtoPreview" class="hidden" alt="Prototype test frame" />
+            <span id="adminProtoPreviewNote">No test frame yet</span>
+          </div>
+          <div class="test-output" id="out-proto-cam">Ready to test prototype board endpoints.</div>
+        </div>
+
+        <!-- 2. Laptop Camera Test -->
+        <div class="panel test-card">
+          <div class="test-header">
+            <h3>2. Laptop Camera</h3>
+            <span class="test-badge idle" id="badge-laptop-cam">Not Tested</span>
+          </div>
+          <div class="field">
+            <label for="adminLaptopCamSelect">Detected Cameras</label>
+            <select id="adminLaptopCamSelect"></select>
+          </div>
+          <div class="test-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="testListCamsBtn">Detect Devices</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testStartLaptopCamBtn">Start Preview</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="testStopLaptopCamBtn">Stop</button>
+          </div>
+          <div class="test-preview-box">
+            <video id="adminLaptopVideo" class="hidden" autoplay playsinline muted></video>
+            <span id="adminLaptopVideoNote">Camera stopped</span>
+          </div>
+          <div class="test-output" id="out-laptop-cam">Click Detect Devices or Start Preview.</div>
+        </div>
+
+        <!-- 3. Laptop Microphone Test -->
+        <div class="panel test-card">
+          <div class="test-header">
+            <h3>3. Laptop Microphone</h3>
+            <span class="test-badge idle" id="badge-laptop-mic">Not Tested</span>
+          </div>
+          <div class="field">
+            <label for="adminLaptopMicSelect">Detected Microphones</label>
+            <select id="adminLaptopMicSelect"></select>
+          </div>
+          <div class="test-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="testListMicsBtn">Detect Mics</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testMicMeterBtn">Toggle Level Meter</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testMicRecordBtn">Record 3s Loopback</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testSttBtn">Test Speech-to-Text</button>
+          </div>
+          <div class="meter-wrap">
+            <div class="meter-bar" id="adminMicMeterBar"></div>
+          </div>
+          <audio id="adminMicPlayback" controls class="hidden"></audio>
+          <div class="test-output" id="out-laptop-mic">Test live audio levels, recording playback, and speech recognition.</div>
+        </div>
+
+        <!-- 4. Prototype Microphone Test -->
+        <div class="panel test-card">
+          <div class="test-header">
+            <h3>4. Prototype Microphone</h3>
+            <span class="test-badge idle" id="badge-proto-mic">Not Tested</span>
+          </div>
+          <div class="field">
+            <label for="adminProtoMicUrl">Prototype Audio URL</label>
+            <input type="text" id="adminProtoMicUrl" placeholder="http://192.168.1.50/audio" />
+          </div>
+          <div class="test-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="testProtoMicPingBtn">Test Endpoint</button>
+          </div>
+          <div class="test-output" id="out-proto-mic">Configure a prototype audio endpoint when hardware mic is added.</div>
+        </div>
+
+        <!-- 5. Speaker / TTS Test -->
+        <div class="panel test-card">
+          <div class="test-header">
+            <h3>5. Speaker &amp; Text-to-Speech</h3>
+            <span class="test-badge idle" id="badge-speaker">Not Tested</span>
+          </div>
+          <div class="field">
+            <label for="adminVoiceSelect">System Voice</label>
+            <select id="adminVoiceSelect"></select>
+          </div>
+          <div class="test-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="testBeepBtn">Play Test Tone</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testTtsBtn">Speak Test Phrase</button>
+          </div>
+          <div class="test-output" id="out-speaker">Verify browser audio playback and voice synthesis.</div>
+        </div>
+
+        <!-- 6. Local AI Model Test -->
+        <div class="panel test-card">
+          <div class="test-header">
+            <h3>6. Local AI Model (Text &amp; Vision)</h3>
+            <span class="test-badge idle" id="badge-ai">Not Tested</span>
+          </div>
+          <div class="test-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="testAiPingBtn">Ping Server</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testAiTextBtn">Text Prompt Test</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="testAiVisionBtn">Vision Test</button>
+          </div>
+          <div class="test-output" id="out-ai">Checks server reachability, latency, and image support.</div>
+        </div>
+
+        <!-- 7. PDF Parser & Retrieval Test -->
+        <div class="panel test-card">
+          <div class="test-header">
+            <h3>7. PDF Engine &amp; Search Test</h3>
+            <span class="test-badge idle" id="badge-pdf">Not Tested</span>
+          </div>
+          <div class="inline-row">
+            <input type="text" id="adminPdfQueryInput" placeholder="Enter a keyword from your PDFs..." />
+            <button type="button" class="btn btn-secondary btn-sm" id="testPdfSearchBtn">Test Search</button>
+          </div>
+          <div class="test-output" id="out-pdf">Tests how relevant passages are pulled from active PDFs.</div>
+        </div>
+
+        <!-- 8. Local Proxy / Server Bridge Test -->
+        <div class="panel test-card">
+          <div class="test-header">
+            <h3>8. Local Web Bridge</h3>
+            <span class="test-badge idle" id="badge-bridge">Not Tested</span>
+          </div>
+          <div class="test-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="testBridgeBtn">Check Bridge Status</button>
+          </div>
+          <div class="test-output" id="out-bridge">Checks if the local proxy server (for CORS-free Ollama &amp; board camera relay) is running.</div>
+        </div>
+
+        <!-- Diagnostic Console -->
+        <div class="panel span-2">
+          <div class="panel-header">
+            <div>
+              <h3>Live Component Test Log</h3>
+              <p class="panel-meta">Detailed timestamps and responses from every test run.</p>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="clearAdminLogBtn">Clear Log</button>
+          </div>
+          <pre class="log-console" id="adminLogConsole">[Ready] Open any test above to inspect components individually.</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="toast hidden" id="toast" role="status"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

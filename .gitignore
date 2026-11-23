@@ -1,0 +1,31 @@
+# Local secrets & runtime configs (never commit)
+wifi_local.json
+*.local.json
+.env
+.env.*
+ai/camera_config.json
+ai/captured_problem.jpg
+ai/last_question.wav
+ai/last_answer.wav
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Large AI datasets, vector DB, and downloaded models (too large for GitHub)
+ai/pdfs/
+ai/stem_chromadb/
+ai/stt_models/
+ai/voices/
+
+# Firmware build output, vendored SDK, and compiler toolchain
+firmware/AiPi-CAM-D200/build/
+firmware/bouffalo_sdk/
+firmware/toolchain_gcc_t-head_windows/
+
+# OS clutter
+.DS_Store
+Thumbs.db
+

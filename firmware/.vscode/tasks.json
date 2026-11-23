@@ -1,0 +1,66 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "comPort",
+      "type": "promptString",
+      "description": "COM port of your USB-to-TTL adapter (Device Manager, Ports)",
+      "default": "COM23"
+    },
+    {
+      "id": "wifiCommand",
+      "type": "promptString",
+      "description": "Full AT command, no commas inside the name or password",
+      "default": "AT+WJAP=YourWiFiName,YourPassword"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "AiPi: build",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/build.ps1"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": "$gcc",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "AiPi: clean build",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/build.ps1", "-Clean"],
+      "problemMatcher": "$gcc",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "AiPi: flash (enter download mode first)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/flash.ps1", "-Port", "${input:comPort}"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "AiPi: build then flash",
+      "dependsOrder": "sequence",
+      "dependsOn": ["AiPi: build", "AiPi: flash (enter download mode first)"],
+      "problemMatcher": []
+    },
+    {
+      "label": "AiPi: watch console (20 s)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/at.ps1", "-Port", "${input:comPort}", "-WatchSeconds", "20"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "AiPi: send AT command",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/at.ps1", "-Port", "${input:comPort}", "-Command", "${input:wifiCommand}"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    }
+  ]
+}

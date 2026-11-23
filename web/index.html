@@ -7,6 +7,218 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- ===================== LANDING PAGE (PROJECT INTRO) ===================== -->
+  <div class="landing-page" id="landingPage">
+    <header class="landing-nav">
+      <div class="landing-container landing-nav-inner">
+        <div class="brand" id="landingBrandTrigger" title="Student AI Assistant">
+          <span class="brand-logo" aria-hidden="true">AI</span>
+          <div class="brand-text">
+            <strong>Student Assistant</strong>
+            <span class="brand-sub">G12 Capstone Project</span>
+          </div>
+        </div>
+
+        <nav class="landing-links" aria-label="Landing sections">
+          <a href="#features" data-scroll-to="features">Features</a>
+          <a href="#architecture" data-scroll-to="architecture">How It Connects</a>
+          <a href="#how-it-works" data-scroll-to="how-it-works">Get Started</a>
+        </nav>
+
+        <div class="landing-nav-actions">
+          <button class="icon-btn" id="landingThemeToggleBtn" title="Switch light / dark theme" aria-label="Toggle theme">
+            &#9790;
+          </button>
+          <button class="btn btn-primary" type="button" data-enter-dashboard="workspace">
+            Open Dashboard &rarr;
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="landing-main">
+      <!-- Hero Section -->
+      <section class="landing-hero">
+        <div class="landing-container hero-grid">
+          <div class="hero-copy">
+            <span class="hero-pill">Grade 12 Capstone &bull; Local AI + Hardware Prototype</span>
+            <h1>Your Smart Study Companion, Powered by Vision &amp; Local AI</h1>
+            <p class="hero-lead">
+              Student Assistant brings together an <strong>AiPi-CAM-D200</strong> Wi-Fi camera board,
+              voice &amp; text interaction, and your own <strong>PDF study notes</strong> &mdash;
+              running privately on a local AI model right on your computer.
+            </p>
+
+            <div class="hero-actions">
+              <button class="btn btn-primary btn-lg" type="button" data-enter-dashboard="workspace">
+                Enter Dashboard &rarr;
+              </button>
+              <a class="btn btn-secondary btn-lg" href="#how-it-works" data-scroll-to="how-it-works">
+                How It Works
+              </a>
+            </div>
+
+            <div class="hero-live-bar" aria-label="System readiness">
+              <span class="status-pill" id="landingBridgeStatus">
+                <span class="dot idle"></span> Bridge: Checking...
+              </span>
+              <span class="status-pill" id="landingAiStatus">
+                <span class="dot offline"></span> Local AI: Checking...
+              </span>
+              <span class="status-pill" id="landingPdfStatus">
+                <span class="dot idle"></span> 0 Active PDFs
+              </span>
+            </div>
+          </div>
+
+          <!-- Architecture Showcase Card -->
+          <div class="hero-showcase" id="architecture">
+            <div class="showcase-header">
+              <div class="showcase-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <span class="showcase-title">Capstone System Architecture</span>
+            </div>
+
+            <div class="architecture-flow">
+              <div class="flow-card">
+                <div class="flow-icon">&#128249;</div>
+                <div class="flow-body">
+                  <strong>1. Capture &amp; Input</strong>
+                  <p>Stream live frames from the <b>AiPi-CAM-D200</b> board over Wi-Fi (or laptop webcam) and speak or type your question.</p>
+                </div>
+              </div>
+
+              <div class="flow-connector" aria-hidden="true">&darr;</div>
+
+              <div class="flow-card">
+                <div class="flow-icon">&#129504;</div>
+                <div class="flow-body">
+                  <strong>2. Local AI &amp; PDF Context</strong>
+                  <p>Your PC runs <b>Ollama</b> or <b>LM Studio</b> with your custom tutor rules and active PDF textbooks &mdash; 100% private.</p>
+                </div>
+              </div>
+
+              <div class="flow-connector" aria-hidden="true">&darr;</div>
+
+              <div class="flow-card">
+                <div class="flow-icon">&#127891;</div>
+                <div class="flow-body">
+                  <strong>3. Guided Study Studio</strong>
+                  <p>Get step-by-step explanations, visual problem help, quizzes, and optional Read Aloud audio in one dashboard.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="showcase-footer">
+              <span>Jump straight to:</span>
+              <div class="showcase-jumps">
+                <button type="button" class="chip-btn" data-enter-dashboard="workspace">&#128172; Workspace</button>
+                <button type="button" class="chip-btn" data-enter-dashboard="model">&#9881; AI &amp; Rules</button>
+                <button type="button" class="chip-btn" data-enter-dashboard="pdfs">&#128196; PDF Library</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section class="landing-section" id="features">
+        <div class="landing-container">
+          <div class="section-heading">
+            <span class="section-eyebrow">What&rsquo;s Inside</span>
+            <h2>Built for Real Classroom &amp; Homework Workflows</h2>
+            <p>Every tool you need to connect your hardware prototype with local AI models and personal study material.</p>
+          </div>
+
+          <div class="feature-grid">
+            <article class="feature-card">
+              <div class="feature-icon">&#128248;</div>
+              <h3>Prototype &amp; Laptop Camera</h3>
+              <p>Connect your AiPi-CAM-D200 board via IP or switch to your laptop camera. Freeze frames and attach snapshots directly to any AI question.</p>
+            </article>
+
+            <article class="feature-card">
+              <div class="feature-icon">&#128274;</div>
+              <h3>100% Local &amp; Private AI</h3>
+              <p>Works directly with Ollama or LM Studio on your PC &mdash; supporting vision models like <code>llava</code>, <code>llama3.2-vision</code>, and <code>gemma3</code>.</p>
+            </article>
+
+            <article class="feature-card">
+              <div class="feature-icon">&#128218;</div>
+              <h3>Toggleable PDF Library</h3>
+              <p>Drag and drop textbooks, slides, or notes. Turn individual files ON or OFF so the assistant focuses only on your current subject.</p>
+            </article>
+
+            <article class="feature-card">
+              <div class="feature-icon">&#127908;</div>
+              <h3>Custom Tutor Rules &amp; Voice</h3>
+              <p>Create subject profiles, enable <em>Hints First</em> mode, speak using your laptop or prototype mic, and listen to answers with Read Aloud.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works Section -->
+      <section class="landing-section landing-section-alt" id="how-it-works">
+        <div class="landing-container">
+          <div class="section-heading">
+            <span class="section-eyebrow">3 Simple Steps</span>
+            <h2>Ready in Under a Minute</h2>
+            <p>Go from powering on your setup to solving problems with your local AI tutor.</p>
+          </div>
+
+          <div class="steps-grid">
+            <div class="step-card">
+              <span class="step-num">01</span>
+              <h3>Connect Your Local AI</h3>
+              <p>Run Ollama or LM Studio on your PC, then pick your installed text or vision model inside <strong>AI &amp; Rules</strong>.</p>
+            </div>
+            <div class="step-card">
+              <span class="step-num">02</span>
+              <h3>Add Notes &amp; Camera</h3>
+              <p>Upload your class PDFs in the <strong>PDF Library</strong> and connect your <strong>AiPi-CAM-D200</strong> board IP (or laptop webcam).</p>
+            </div>
+            <div class="step-card">
+              <span class="step-num">03</span>
+              <h3>Ask, Snap &amp; Learn</h3>
+              <p>Type or speak your question, attach a live photo of your worksheet, and get tailored explanations in the <strong>Workspace</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom CTA -->
+      <section class="landing-section">
+        <div class="landing-container">
+          <div class="landing-cta-card">
+            <div>
+              <h2>Ready to Launch Your Study Studio?</h2>
+              <p>Jump into the dashboard to chat with your local AI, connect your camera, or organize your PDFs.</p>
+            </div>
+            <div class="cta-actions">
+              <button class="btn btn-primary btn-lg" type="button" data-enter-dashboard="workspace">
+                Open Dashboard &rarr;
+              </button>
+              <button class="btn btn-secondary btn-lg" type="button" data-enter-dashboard="model">
+                Setup AI &amp; Rules
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="landing-footer">
+      <div class="landing-container landing-footer-inner">
+        <span><strong>Student AI Assistant</strong> &mdash; G12 Capstone Studio</span>
+        <span class="footer-meta">Runs locally via Python / Node.js bridge &bull; Zero cloud dependency</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===================== DASHBOARD APPLICATION ===================== -->
+  <div class="dashboard-shell hidden" id="dashboardShell">
   <!-- Top Navigation Bar -->
   <header class="topbar">
     <div class="topbar-left">
@@ -19,6 +231,9 @@
       </div>
 
       <nav class="main-nav" aria-label="Main sections">
+        <button class="nav-btn nav-home-btn" id="backToLandingBtn" type="button" title="Back to project introduction">
+          <span class="nav-icon">&#127968;</span> Home
+        </button>
         <button class="nav-btn active" data-view="workspace">
           <span class="nav-icon">&#128172;</span> Workspace
         </button>
@@ -585,6 +800,7 @@
       </div>
     </section>
   </main>
+  </div>
 
   <!-- Toast Notification -->
   <div class="toast hidden" id="toast" role="status"></div>

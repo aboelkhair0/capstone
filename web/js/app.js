@@ -52,11 +52,59 @@ function setStatusPill(id, dotClass, label) {
   const el = document.getElementById(id);
   if (!el) return;
   el.innerHTML = `<span class="dot ${dotClass}"></span> ${label}`;
+  if (id === "aiStatusPill") {
+    const landingAi = document.getElementById("landingAiStatus");
+    if (landingAi) {
+      landingAi.innerHTML = `<span class="dot ${dotClass}"></span> Local ${label}`;
+    }
+  }
+}
+
+function showLanding(updateHash = true) {
+  document.getElementById("landingPage")?.classList.remove("hidden");
+  document.getElementById("dashboardShell")?.classList.add("hidden");
+  window.scrollTo({ top: 0, behavior: "instant" });
+  if (updateHash && window.location.hash && window.location.hash !== "#home") {
+    window.location.hash = "home";
+  }
+}
+
+function enterDashboard(viewName = "workspace", updateHash = true) {
+  const validView = ["workspace", "model", "pdfs", "admin"].includes(viewName) ? viewName : "workspace";
+  document.getElementById("landingPage")?.classList.add("hidden");
+  document.getElementById("dashboardShell")?.classList.remove("hidden");
+  switchView(validView);
+  window.scrollTo({ top: 0, behavior: "instant" });
+  if (updateHash) {
+    const targetHash = `#${validView}`;
+    if (window.location.hash !== targetHash) {
+      window.location.hash = validView;
+    }
+  }
+}
+
+function syncRouteFromHash() {
+  const hash = window.location.hash.replace(/^#/, "").toLowerCase();
+  const isAdminParam = new URLSearchParams(window.location.search).get("admin") === "1";
+
+  if (hash === "admin" || isAdminParam) {
+    unlockAdmin(true);
+    return;
+  }
+  if (hash === "dashboard" || hash === "workspace") {
+    enterDashboard("workspace", false);
+    return;
+  }
+  if (hash === "model" || hash === "pdfs") {
+    enterDashboard(hash, false);
+    return;
+  }
+  showLanding(false);
 }
 
 function switchView(viewName) {
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-  document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".nav-btn[data-view]").forEach((b) => b.classList.remove("active"));
 
   const targetView = document.getElementById(`view-${viewName}`);
   const targetBtn = document.querySelector(`.nav-btn[data-view="${viewName}"]`);
@@ -72,7 +120,7 @@ function unlockAdmin(openImmediately = true) {
   adminUnlocked = true;
   document.getElementById("adminNavBtn").classList.remove("hidden");
   if (openImmediately) {
-    switchView("admin");
+    enterDashboard("admin", false);
     showToast("Hidden Admin Test Lab unlocked");
   }
 }
@@ -80,15 +128,24 @@ function unlockAdmin(openImmediately = true) {
 function hideAdmin() {
   adminUnlocked = false;
   document.getElementById("adminNavBtn").classList.add("hidden");
-  switchView("workspace");
+  enterDashboard("workspace", true);
   showToast("Admin Lab hidden");
 }
 
 // ==================== THEME ====================
+function toggleTheme() {
+  state.theme = state.theme === "dark" ? "light" : "dark";
+  saveState(state);
+  applyTheme();
+}
+
 function applyTheme() {
   document.documentElement.setAttribute("data-theme", state.theme || "light");
+  const icon = state.theme === "dark" ? "&#9728;" : "&#9790;";
   const btn = document.getElementById("themeToggleBtn");
-  btn.innerHTML = state.theme === "dark" ? "&#9728;" : "&#9790;";
+  const landingBtn = document.getElementById("landingThemeToggleBtn");
+  if (btn) btn.innerHTML = icon;
+  if (landingBtn) landingBtn.innerHTML = icon;
 }
 
 // ==================== PROFILES & PERSONALIZATION UI ====================
@@ -191,6 +248,12 @@ function updateContextSummaries() {
   document.getElementById("miniPdfsCount").textContent = `${activePdfs} enabled`;
   document.getElementById("miniMicSource").textContent =
     state.micSource === "laptop" ? "Laptop Mic" : "Prototype Mic";
+
+  setStatusPill(
+    "landingPdfStatus",
+    activePdfs > 0 ? "online" : "idle",
+    `${activePdfs} Active PDF${activePdfs === 1 ? "" : "s"}`
+  );
 }
 
 function savePersonalizationFromForm() {
@@ -721,6 +784,11 @@ async function init() {
   // Check if local web bridge (server.py / server.mjs) is running
   const bridge = await checkLocalBridge();
   bridgeAvailable = bridge.available;
+  setStatusPill(
+    "landingBridgeStatus",
+    bridgeAvailable ? "online" : "warn",
+    bridgeAvailable ? "Bridge: Ready" : "Bridge: Direct Mode"
+  );
 
   renderProfilesDropdown();
   renderPersonalizationForm();
@@ -739,19 +807,32 @@ async function init() {
     onHideAdmin: hideAdmin
   });
 
-  // Unlock admin automatically if URL has #admin or ?admin=1
-  if (window.location.hash === "#admin" || new URLSearchParams(window.location.search).get("admin") === "1") {
-    unlockAdmin(true);
-  }
+  // Route between Landing Page and Dashboard views via URL hash
+  syncRouteFromHash();
+  window.addEventListener("hashchange", syncRouteFromHash);
+
+  // Landing page navigation & smooth section scrolling
+  document.querySelectorAll("[data-enter-dashboard]").forEach((btn) => {
+    btn.addEventListener("click", () => enterDashboard(btn.dataset.enterDashboard || "workspace", true));
+  });
+  document.querySelectorAll("[data-scroll-to]").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const target = document.getElementById(link.dataset.scrollTo);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+  document.getElementById("backToLandingBtn")?.addEventListener("click", () => showLanding(true));
 
   // Secret shortcut: Ctrl + Shift + A
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "a") {
       e.preventDefault();
       if (adminUnlocked) {
-        const isAdminOpen = document.getElementById("view-admin").classList.contains("active");
+        const isDashboardVisible = !document.getElementById("dashboardShell").classList.contains("hidden");
+        const isAdminOpen = isDashboardVisible && document.getElementById("view-admin").classList.contains("active");
         if (isAdminOpen) hideAdmin();
-        else switchView("admin");
+        else enterDashboard("admin", true);
       } else {
         unlockAdmin(true);
       }
@@ -772,19 +853,16 @@ async function init() {
   });
 
   // Top navigation
-  document.querySelectorAll(".nav-btn").forEach((btn) => {
-    btn.addEventListener("click", () => switchView(btn.dataset.view));
+  document.querySelectorAll(".nav-btn[data-view]").forEach((btn) => {
+    btn.addEventListener("click", () => enterDashboard(btn.dataset.view, true));
   });
   document.querySelectorAll("[data-jump]").forEach((btn) => {
-    btn.addEventListener("click", () => switchView(btn.dataset.jump));
+    btn.addEventListener("click", () => enterDashboard(btn.dataset.jump, true));
   });
 
-  // Theme toggle
-  document.getElementById("themeToggleBtn").addEventListener("click", () => {
-    state.theme = state.theme === "dark" ? "light" : "dark";
-    saveState(state);
-    applyTheme();
-  });
+  // Theme toggle (both dashboard & landing header)
+  document.getElementById("themeToggleBtn").addEventListener("click", toggleTheme);
+  document.getElementById("landingThemeToggleBtn")?.addEventListener("click", toggleTheme);
 
   // Profile dropdown switch
   document.getElementById("profileSelect").addEventListener("change", (e) => {
